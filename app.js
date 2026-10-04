@@ -246,12 +246,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Download Feature
+    const cancelDownloadBtn = document.getElementById('cancel-download-btn');
+    let currentDownloadController = null;
+
     downloadAlbumBtn.addEventListener('click', async () => {
         if (!currentAlbum || typeof JSZip === 'undefined') return;
         const format = downloadFormatSelect.value;
         const zip = new JSZip();
+        
+        currentDownloadController = new AbortController();
+        const { signal } = currentDownloadController;
+        
+        downloadAlbumBtn.classList.add('hidden');
+        cancelDownloadBtn.classList.remove('hidden');
         downloadProgress.classList.remove('hidden');
         downloadProgress.textContent = "Berechne...";
+        downloadProgress.style.color = "var(--accent)";
         
         try {
             const urlsToDownload = currentAlbum.availableFiles.map(group => {
@@ -264,7 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             for (let i = 0; i < urlsToDownload.length; i++) {
                 const f = urlsToDownload[i];
                 downloadProgress.textContent = `Lade ${i+1}/${urlsToDownload.length} (${f.name})...`;
-                const res = await fetch(f.url);
+                const res = await fetch(f.url, { signal });
                 if (!res.ok) throw new Error("Download failed for " + f.name);
                 const blob = await res.blob();
                 zip.file(f.name, blob);
@@ -274,11 +284,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const zipBlob = await zip.generateAsync({type: "blob"});
             saveAs(zipBlob, `${currentAlbum.title}.zip`);
             downloadProgress.textContent = "Fertig!";
-            setTimeout(() => downloadProgress.classList.add('hidden'), 3000);
         } catch(e) {
-            console.error(e);
-            downloadProgress.textContent = "Fehler beim Download!";
-            setTimeout(() => downloadProgress.classList.add('hidden'), 3000);
+            if (e.name === 'AbortError') {
+                downloadProgress.textContent = "Abgebrochen.";
+                downloadProgress.style.color = "#e91e63";
+            } else {
+                console.error(e);
+                downloadProgress.textContent = "Fehler beim Download!";
+                downloadProgress.style.color = "#e91e63";
+            }
+        } finally {
+            currentDownloadController = null;
+            setTimeout(() => {
+                downloadProgress.classList.add('hidden');
+                downloadAlbumBtn.classList.remove('hidden');
+                cancelDownloadBtn.classList.add('hidden');
+            }, 3000);
+        }
+    });
+
+    cancelDownloadBtn.addEventListener('click', () => {
+        if (currentDownloadController) {
+            currentDownloadController.abort();
         }
     });
 
