@@ -1,0 +1,16 @@
+{
+    "name": "DR3iARCHiVE",
+    "short_name": "DR3iARCHiVE",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#0a0a0a",
+    "description": "Minimalistic streaming player for DiE DR3i Hörspiele",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml"
+        }
+    ]
+}
