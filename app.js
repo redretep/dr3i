@@ -70,6 +70,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeSettingsModalBtn = document.getElementById('close-settings-modal');
     const colorBtns = document.querySelectorAll('.color-btn');
 
+    // UI State & History Logic
+    function pushState(id) {
+        history.pushState({ view: id }, '', `#${id}`);
+    }
+
+    window.addEventListener('popstate', (e) => {
+        if (!settingsModal.classList.contains('hidden')) {
+            settingsModal.classList.add('hidden');
+        } else if (!sleepModal.classList.contains('hidden')) {
+            sleepModal.classList.add('hidden');
+        } else if (fsPlayer.classList.contains('open')) {
+            fsPlayer.classList.remove('open');
+        } else if (albumDetailView.classList.contains('active')) {
+            albumDetailView.classList.remove('active');
+            albumsView.classList.add('active');
+            backBtn.classList.add('hidden');
+            viewTitle.textContent = "DR3iARCHiVE";
+            currentAlbum = null;
+        }
+    });
+
     // Download
     const downloadAlbumBtn = document.getElementById('download-album-btn');
     const downloadFormatSelect = document.getElementById('download-format');
@@ -229,9 +250,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Fullscreen Player Toggle
+    bottomPlayer.addEventListener('click', (e) => {
+        if (e.target.closest('.player-controls-container') || e.target.closest('#progress-slider')) return;
+        if (!fsPlayer.classList.contains('open')) {
+            fsPlayer.classList.add('open');
+            pushState('player');
+        }
+    });
+    fsCloseBtn.addEventListener('click', () => history.back());
+
     // Settings
-    settingsToggleBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-    closeSettingsModalBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+    settingsToggleBtn.addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+        pushState('settings');
+    });
+    closeSettingsModalBtn.addEventListener('click', () => history.back());
 
     // Search
     searchToggleBtn.addEventListener('click', () => {
@@ -346,15 +380,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         backBtn.classList.remove('hidden');
         viewTitle.textContent = currentAlbum.title;
         updateActiveTrackUI();
+        pushState('album');
     }
 
-    backBtn.addEventListener('click', () => {
-        albumDetailView.classList.remove('active');
-        albumsView.classList.add('active');
-        backBtn.classList.add('hidden');
-        viewTitle.textContent = "DR3iARCHiVE";
-        currentAlbum = null;
-    });
+    backBtn.addEventListener('click', () => history.back());
 
     playAlbumBtn.addEventListener('click', () => {
         if (currentAlbum && currentAlbum.tracks.length > 0) playFromQueue(currentAlbum.tracks, 0);
@@ -517,16 +546,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     nextBtn.addEventListener('click', (e) => { e.stopPropagation(); playNext(); });
     fsNextBtn.addEventListener('click', playNext);
 
-    // Fullscreen Player Toggle
-    bottomPlayer.addEventListener('click', (e) => {
-        // Prevent opening if clicking on controls (they have pointer-events: auto in CSS)
-        if (e.target.closest('.player-controls-container') || e.target.closest('#progress-slider')) return;
-        fsPlayer.classList.add('open');
-    });
-    fsCloseBtn.addEventListener('click', () => {
-        fsPlayer.classList.remove('open');
-    });
-
     // Progress Bar Logic
     function updateProgress() {
         if (!activeAudio.src || isDraggingSlider) return;
@@ -584,30 +603,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     function openSleepModal(e) {
         if (e) e.stopPropagation();
         sleepModal.classList.remove('hidden');
+        pushState('sleep');
     }
     sleepBtn.addEventListener('click', openSleepModal);
     fsSleepBtn.addEventListener('click', openSleepModal);
+    closeSleepModalBtn.addEventListener('click', () => history.back());
 
-    document.querySelectorAll('.timer-options button').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const minutes = parseInt(e.target.getAttribute('data-time'));
-            clearTimeout(sleepTimer);
-            if (minutes === 0) {
+    function setSleepTimer(minutes) {
+        clearTimeout(sleepTimer);
+        if (minutes <= 0 || isNaN(minutes)) {
+            sleepBadge.classList.add('hidden');
+            fsSleepBadge.classList.add('hidden');
+        } else {
+            sleepBadge.textContent = minutes + 'm';
+            fsSleepBadge.textContent = minutes + 'm';
+            sleepBadge.classList.remove('hidden');
+            fsSleepBadge.classList.remove('hidden');
+            
+            sleepTimer = setTimeout(() => {
+                activeAudio.pause();
                 sleepBadge.classList.add('hidden');
                 fsSleepBadge.classList.add('hidden');
-            } else {
-                sleepBadge.textContent = minutes + 'm';
-                fsSleepBadge.textContent = minutes + 'm';
-                sleepBadge.classList.remove('hidden');
-                fsSleepBadge.classList.remove('hidden');
-                
-                sleepTimer = setTimeout(() => {
-                    activeAudio.pause();
-                    sleepBadge.classList.add('hidden');
-                    fsSleepBadge.classList.add('hidden');
-                }, minutes * 60 * 1000);
-            }
-            sleepModal.classList.add('hidden');
+            }, minutes * 60 * 1000);
+        }
+    }
+
+    document.querySelectorAll('.timer-options button[data-time]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const minutes = parseInt(e.target.getAttribute('data-time'));
+            setSleepTimer(minutes);
+            history.back();
         });
+    });
+
+    const customSleepInput = document.getElementById('custom-sleep-input');
+    const customSleepBtn = document.getElementById('custom-sleep-btn');
+    customSleepBtn.addEventListener('click', () => {
+        const mins = parseInt(customSleepInput.value);
+        if (mins > 0) {
+            setSleepTimer(mins);
+            history.back();
+        }
     });
 });
