@@ -11,7 +11,6 @@
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     
-    <!-- Libraries for ZIP download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
@@ -48,7 +47,6 @@
                     <h3 class="section-title">Zuletzt gehört</h3>
                     <div class="history-scroll" id="history-scroll"></div>
                 </section>
-
                 <section>
                     <h3 class="section-title">Alle Folgen</h3>
                     <div class="albums-grid" id="albums-grid"></div>
@@ -76,7 +74,6 @@
                         <svg viewBox="0 0 24 24" fill="black" width="28" height="28"><path d="M8 5v14l11-7z"/></svg>
                     </button>
                     
-                    <!-- Download Controls -->
                     <div class="download-controls">
                         <select id="download-format" class="format-select">
                             <option value="mp3">MP3</option>
@@ -93,7 +90,7 @@
             </div>
         </main>
 
-        <!-- Bottom Player -->
+        <!-- Bottom Mini Player -->
         <div id="bottom-player" class="glass-panel">
             <div class="progress-bar-container">
                 <span id="time-current" class="time-label">0:00</span>
@@ -124,10 +121,59 @@
                             <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
                         </button>
                         <button id="sleep-btn" class="icon-btn" aria-label="Sleep Timer" style="opacity: 0.7;">
-                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
                             <span id="sleep-badge" class="badge hidden"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fullscreen Player -->
+        <div id="fullscreen-player" class="fullscreen-panel">
+            <div class="fs-bg" id="fs-bg"></div>
+            <div class="fs-content">
+                <header class="fs-header">
+                    <button id="fs-close-btn" class="icon-btn">
+                        <svg viewBox="0 0 24 24" fill="white" width="32" height="32"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                    </button>
+                    <div class="fs-header-text">Läuft gerade</div>
+                    <div style="width: 40px;"></div> <!-- spacer -->
+                </header>
+
+                <div class="fs-cover-container">
+                    <div class="fs-cover" id="fs-cover"></div>
+                </div>
+
+                <div class="fs-info-controls">
+                    <div class="fs-info">
+                        <h2 id="fs-title">Track Title</h2>
+                        <h3 id="fs-artist">DR3iARCHiVE</h3>
+                    </div>
+
+                    <div class="fs-progress-container">
+                        <input type="range" id="fs-progress-slider" min="0" max="100" value="0">
+                        <div class="fs-time-labels">
+                            <span id="fs-time-current">0:00</span>
+                            <span id="fs-time-total">0:00</span>
+                        </div>
+                    </div>
+
+                    <div class="fs-controls">
+                        <button id="fs-speed-btn" class="text-btn">1x</button>
+                        <button id="fs-prev-btn" class="icon-btn large-btn">
+                            <svg viewBox="0 0 24 24" fill="white" width="40" height="40"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                        </button>
+                        <button id="fs-play-pause-btn" class="btn-play-circle huge">
+                            <svg id="fs-icon-play" viewBox="0 0 24 24" fill="black" width="36" height="36"><path d="M8 5v14l11-7z"/></svg>
+                            <svg id="fs-icon-pause" class="hidden" viewBox="0 0 24 24" fill="black" width="36" height="36"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                        <button id="fs-next-btn" class="icon-btn large-btn">
+                            <svg viewBox="0 0 24 24" fill="white" width="40" height="40"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                        </button>
+                        <button id="fs-sleep-btn" class="icon-btn">
+                            <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                            <span id="fs-sleep-badge" class="badge hidden"></span>
                         </button>
                     </div>
                 </div>
@@ -154,7 +200,6 @@
     <div id="settings-modal" class="modal hidden">
         <div class="modal-content glass-panel">
             <h3>Einstellungen</h3>
-            
             <div class="settings-section">
                 <label>Theme Farbe</label>
                 <div class="color-picker-container">
@@ -165,7 +210,6 @@
                     <button class="color-btn" style="background: #9c27b0" data-color="#9c27b0" data-hover="#ba68c8"></button>
                 </div>
             </div>
-
             <button id="close-settings-modal" class="btn-cancel">Schließen</button>
         </div>
     </div>

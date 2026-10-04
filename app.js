@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const historySection = document.getElementById('history-section');
     const historyScroll = document.getElementById('history-scroll');
 
-    // Player Controls
+    // Mini Player Controls
+    const bottomPlayer = document.getElementById('bottom-player');
     const playPauseBtn = document.getElementById('play-pause-btn');
     const iconPlay = document.getElementById('icon-play');
     const iconPause = document.getElementById('icon-pause');
@@ -34,15 +35,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const speedBtn = document.getElementById('speed-btn');
     const sleepBtn = document.getElementById('sleep-btn');
     const sleepBadge = document.getElementById('sleep-badge');
-    const sleepModal = document.getElementById('sleep-modal');
-    const closeSleepModalBtn = document.getElementById('close-sleep-modal');
 
-    // Progress Bar
+    // Mini Player Progress
     const progressSlider = document.getElementById('progress-slider');
     const timeCurrent = document.getElementById('time-current');
     const timeTotal = document.getElementById('time-total');
 
-    // Settings
+    // Fullscreen Player
+    const fsPlayer = document.getElementById('fullscreen-player');
+    const fsCloseBtn = document.getElementById('fs-close-btn');
+    const fsBg = document.getElementById('fs-bg');
+    const fsCover = document.getElementById('fs-cover');
+    const fsTitle = document.getElementById('fs-title');
+    const fsArtist = document.getElementById('fs-artist');
+    const fsProgressSlider = document.getElementById('fs-progress-slider');
+    const fsTimeCurrent = document.getElementById('fs-time-current');
+    const fsTimeTotal = document.getElementById('fs-time-total');
+    
+    // FS Controls
+    const fsPlayPauseBtn = document.getElementById('fs-play-pause-btn');
+    const fsIconPlay = document.getElementById('fs-icon-play');
+    const fsIconPause = document.getElementById('fs-icon-pause');
+    const fsPrevBtn = document.getElementById('fs-prev-btn');
+    const fsNextBtn = document.getElementById('fs-next-btn');
+    const fsSpeedBtn = document.getElementById('fs-speed-btn');
+    const fsSleepBtn = document.getElementById('fs-sleep-btn');
+    const fsSleepBadge = document.getElementById('fs-sleep-badge');
+
+    // Modals
+    const sleepModal = document.getElementById('sleep-modal');
+    const closeSleepModalBtn = document.getElementById('close-sleep-modal');
     const settingsToggleBtn = document.getElementById('settings-toggle-btn');
     const settingsModal = document.getElementById('settings-modal');
     const closeSettingsModalBtn = document.getElementById('close-settings-modal');
@@ -101,9 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     colorBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            applyTheme(btn.getAttribute('data-color') + '|' + btn.getAttribute('data-hover'));
-        });
+        btn.addEventListener('click', () => { applyTheme(btn.getAttribute('data-color') + '|' + btn.getAttribute('data-hover')); });
     });
 
     // Load Data
@@ -113,14 +133,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const metaRes = await fetch(METADATA_API);
             const metaJson = await metaRes.json();
             dreimetadaten = metaJson.die_dr3i || [];
-        } catch (e) { console.warn("Could not load external metadata", e); }
+        } catch (e) {}
 
         const response = await fetch(IA_API_URL);
         const data = await response.json();
         if (!data.files) throw new Error("No files found");
 
         const audioFiles = data.files.filter(f => f.name.match(/\.(mp3|flac|m4a|ogg)$/i));
-
         const trackGroups = {};
         audioFiles.forEach(f => {
             const base = getBaseName(f.name);
@@ -131,7 +150,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const albumMap = {};
         Object.keys(trackGroups).sort((a, b) => a.localeCompare(b)).forEach(baseName => {
             const group = trackGroups[baseName];
-            
             const formatScore = (f) => {
                 if (f.format === 'VBR MP3' || f.name.toLowerCase().endsWith('.mp3')) return 4;
                 if (f.format === 'MPEG4 Audio' || f.name.toLowerCase().endsWith('.m4a')) return 3;
@@ -160,24 +178,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     year: match && match.veröffentlichungsdatum ? match.veröffentlichungsdatum.split('-')[0] : '',
                     coverUrl: match && match.links ? match.links.cover : null,
                     description: match ? (match.gesamtbeschreibung || match.beschreibung) : '',
-                    duration: match ? match.gesamtdauer : null, // ms
+                    duration: match ? match.gesamtdauer : null,
                     tracks: [],
                     availableFiles: [],
                     gradient: stringToGradient(folderName)
                 };
             }
 
-            // Store files for downloading specific formats
             albumMap[folderName].availableFiles.push(group);
-            
             const bestFile = group[0];
             albumMap[folderName].tracks.push({
-                albumId: folderName,
-                albumTitle: albumMap[folderName].title,
-                coverUrl: albumMap[folderName].coverUrl,
-                title: displayTitle,
-                url: `${DOWNLOAD_URL}/${encodeIAUrl(bestFile.name)}`,
-                originalName: bestFile.name
+                albumId: folderName, albumTitle: albumMap[folderName].title,
+                coverUrl: albumMap[folderName].coverUrl, title: displayTitle,
+                url: `${DOWNLOAD_URL}/${encodeIAUrl(bestFile.name)}`, originalName: bestFile.name
             });
         });
 
@@ -241,15 +254,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         downloadProgress.textContent = "Berechne...";
         
         try {
-            // Find files of chosen format
             const urlsToDownload = currentAlbum.availableFiles.map(group => {
                 let f = group.find(x => x.name.toLowerCase().endsWith(format));
-                if (!f) f = group[0]; // fallback
+                if (!f) f = group[0]; 
                 return { name: getBaseName(f.name).split('/').pop() + '.' + format, url: `${DOWNLOAD_URL}/${encodeIAUrl(f.name)}` };
             });
 
             downloadProgress.textContent = `Lade 0/${urlsToDownload.length} Dateien...`;
-            
             for (let i = 0; i < urlsToDownload.length; i++) {
                 const f = urlsToDownload[i];
                 downloadProgress.textContent = `Lade ${i+1}/${urlsToDownload.length} (${f.name})...`;
@@ -277,7 +288,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (currentAlbum.coverUrl) {
             coverContainer.innerHTML = `<img src="${currentAlbum.coverUrl}" style="width:100%;height:100%;object-fit:cover;" class="skeleton" crossorigin="anonymous" onload="this.classList.remove('skeleton')">`;
             coverContainer.style.background = 'transparent';
-            coverContainer.classList.remove('skeleton');
         } else {
             coverContainer.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:900;color:rgba(255,255,255,0.3)">3</div>';
             coverContainer.style.background = currentAlbum.gradient;
@@ -394,30 +404,52 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     audioA.addEventListener('ended', handleEnded);
     audioB.addEventListener('ended', handleEnded);
-    audioA.addEventListener('play', () => updatePlayPauseIcon(true));
-    audioA.addEventListener('pause', () => updatePlayPauseIcon(false));
-    audioB.addEventListener('play', () => updatePlayPauseIcon(true));
-    audioB.addEventListener('pause', () => updatePlayPauseIcon(false));
+    
+    audioA.addEventListener('play', () => { updatePlayPauseIcon(true); fsPlayer.classList.remove('paused'); });
+    audioA.addEventListener('pause', () => { updatePlayPauseIcon(false); fsPlayer.classList.add('paused'); });
+    audioB.addEventListener('play', () => { updatePlayPauseIcon(true); fsPlayer.classList.remove('paused'); });
+    audioB.addEventListener('pause', () => { updatePlayPauseIcon(false); fsPlayer.classList.add('paused'); });
 
     function updatePlayPauseIcon(isPlaying) {
-        if (isPlaying) { iconPlay.classList.add('hidden'); iconPause.classList.remove('hidden'); }
-        else { iconPause.classList.add('hidden'); iconPlay.classList.remove('hidden'); }
+        if (isPlaying) {
+            iconPlay.classList.add('hidden'); iconPause.classList.remove('hidden');
+            fsIconPlay.classList.add('hidden'); fsIconPause.classList.remove('hidden');
+        } else {
+            iconPause.classList.add('hidden'); iconPlay.classList.remove('hidden');
+            fsIconPause.classList.add('hidden'); fsIconPlay.classList.remove('hidden');
+        }
     }
 
     function updatePlayerState() {
         if (currentQueueIndex < 0) return;
         const track = playingQueue[currentQueueIndex];
         
+        // Mini Player
         document.getElementById('player-title').textContent = track.title;
         document.getElementById('player-artist').textContent = track.albumTitle;
+        
+        // Fullscreen Player
+        fsTitle.textContent = track.title;
+        fsArtist.textContent = track.albumTitle;
+        
+        const albumGrad = stringToGradient(track.albumTitle);
         
         const playerCover = document.getElementById('player-cover');
         if (track.coverUrl) {
             playerCover.innerHTML = `<img src="${track.coverUrl}" style="width:100%;height:100%;object-fit:cover;" class="skeleton" onload="this.classList.remove('skeleton')" crossorigin="anonymous">`;
             playerCover.style.background = 'transparent';
+            
+            fsCover.innerHTML = `<img src="${track.coverUrl}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous">`;
+            fsCover.style.background = 'transparent';
+            fsBg.style.backgroundImage = `url(${track.coverUrl})`;
         } else {
             playerCover.innerHTML = '';
-            playerCover.style.background = stringToGradient(track.albumTitle);
+            playerCover.style.background = albumGrad;
+            
+            fsCover.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:6rem;font-weight:900;color:rgba(255,255,255,0.3)">3</div>';
+            fsCover.style.background = albumGrad;
+            fsBg.style.backgroundImage = 'none';
+            fsBg.style.backgroundColor = albumGrad; // fallback
         }
         
         updateActiveTrackUI();
@@ -444,12 +476,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     function playPrev() { if (currentQueueIndex > 0) playFromQueue(playingQueue, currentQueueIndex - 1); }
     function playNext() { if (currentQueueIndex < playingQueue.length - 1) playFromQueue(playingQueue, currentQueueIndex + 1); }
 
-    playPauseBtn.addEventListener('click', () => {
+    function togglePlay() {
         if (activeAudio.paused && activeAudio.src) activeAudio.play();
         else activeAudio.pause();
+    }
+    
+    playPauseBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
+    fsPlayPauseBtn.addEventListener('click', togglePlay);
+    
+    prevBtn.addEventListener('click', (e) => { e.stopPropagation(); playPrev(); });
+    fsPrevBtn.addEventListener('click', playPrev);
+    
+    nextBtn.addEventListener('click', (e) => { e.stopPropagation(); playNext(); });
+    fsNextBtn.addEventListener('click', playNext);
+
+    // Fullscreen Player Toggle
+    bottomPlayer.addEventListener('click', (e) => {
+        // Prevent opening if clicking on controls (they have pointer-events: auto in CSS)
+        if (e.target.closest('.player-controls-container') || e.target.closest('#progress-slider')) return;
+        fsPlayer.classList.add('open');
     });
-    prevBtn.addEventListener('click', playPrev);
-    nextBtn.addEventListener('click', playNext);
+    fsCloseBtn.addEventListener('click', () => {
+        fsPlayer.classList.remove('open');
+    });
 
     // Progress Bar Logic
     function updateProgress() {
@@ -458,10 +507,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const total = activeAudio.duration;
         if (!isNaN(total)) {
             const perc = (curr / total) * 100;
+            const bg = `linear-gradient(to right, var(--text-base) ${perc}%, rgba(255,255,255,0.2) ${perc}%)`;
+            
             progressSlider.value = perc;
-            progressSlider.style.background = `linear-gradient(to right, var(--text-base) ${perc}%, rgba(255,255,255,0.2) ${perc}%)`;
+            progressSlider.style.background = bg;
             timeCurrent.textContent = formatTime(curr);
             timeTotal.textContent = formatTime(total);
+            
+            fsProgressSlider.value = perc;
+            fsProgressSlider.style.background = bg;
+            fsTimeCurrent.textContent = formatTime(curr);
+            fsTimeTotal.textContent = formatTime(total);
         }
     }
     audioA.addEventListener('timeupdate', updateProgress);
@@ -469,28 +525,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     audioA.addEventListener('loadedmetadata', updateProgress);
     audioB.addEventListener('loadedmetadata', updateProgress);
 
-    progressSlider.addEventListener('input', (e) => {
+    function onSliderInput(e) {
         isDraggingSlider = true;
         const val = e.target.value;
         e.target.style.background = `linear-gradient(to right, var(--accent) ${val}%, rgba(255,255,255,0.2) ${val}%)`;
-    });
-    progressSlider.addEventListener('change', (e) => {
+    }
+    function onSliderChange(e) {
         if (activeAudio.src && !isNaN(activeAudio.duration)) {
             activeAudio.currentTime = (e.target.value / 100) * activeAudio.duration;
         }
         isDraggingSlider = false;
-    });
+    }
 
-    speedBtn.addEventListener('click', () => {
+    progressSlider.addEventListener('input', onSliderInput);
+    progressSlider.addEventListener('change', onSliderChange);
+    fsProgressSlider.addEventListener('input', onSliderInput);
+    fsProgressSlider.addEventListener('change', onSliderChange);
+
+    function cycleSpeed(e) {
+        if (e) e.stopPropagation();
         let idx = speedOptions.indexOf(playbackSpeed);
         idx = (idx + 1) % speedOptions.length;
         playbackSpeed = speedOptions[idx];
         speedBtn.textContent = playbackSpeed + 'x';
+        fsSpeedBtn.textContent = playbackSpeed + 'x';
         activeAudio.playbackRate = playbackSpeed;
-    });
+    }
+    speedBtn.addEventListener('click', cycleSpeed);
+    fsSpeedBtn.addEventListener('click', cycleSpeed);
 
-    sleepBtn.addEventListener('click', () => sleepModal.classList.remove('hidden'));
-    closeSleepModalBtn.addEventListener('click', () => sleepModal.classList.add('hidden'));
+    function openSleepModal(e) {
+        if (e) e.stopPropagation();
+        sleepModal.classList.remove('hidden');
+    }
+    sleepBtn.addEventListener('click', openSleepModal);
+    fsSleepBtn.addEventListener('click', openSleepModal);
 
     document.querySelectorAll('.timer-options button').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -498,12 +567,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             clearTimeout(sleepTimer);
             if (minutes === 0) {
                 sleepBadge.classList.add('hidden');
+                fsSleepBadge.classList.add('hidden');
             } else {
                 sleepBadge.textContent = minutes + 'm';
+                fsSleepBadge.textContent = minutes + 'm';
                 sleepBadge.classList.remove('hidden');
+                fsSleepBadge.classList.remove('hidden');
+                
                 sleepTimer = setTimeout(() => {
                     activeAudio.pause();
                     sleepBadge.classList.add('hidden');
+                    fsSleepBadge.classList.add('hidden');
                 }, minutes * 60 * 1000);
             }
             sleepModal.classList.add('hidden');
